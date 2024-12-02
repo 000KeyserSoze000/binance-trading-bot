@@ -1,0 +1,2237 @@
+<!-- 
+    Copyright © 2024 Florent Claudel. 
+    Tous droits réservés.
+    Ce fichier est destiné à un usage personnel ou éducatif. Vous pouvez l'améliorer. Toute distribution ou utilisation commerciale est interdite sans autorisation préalable.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binance Trading Bot </title>
+    <link rel="manifest" href="manifest.json">
+ <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+ <style>
+:root {
+  --theme-color: #F0B90B;
+  --chart-bg: #0B0E11;
+  --text-color: #848E9C;
+  --card-bg: #1E2329;
+  --border-color: #2B3139;
+}
+	  #installBanner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color:#F0B90B;
+      color: #000000;
+      text-align: center;
+      padding: 10px;
+      z-index: 1000;
+    }
+    #installBanner button {
+      background-color: #fff;
+      color: #333;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+body {
+  background: #0B0E11;
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  padding: 2rem;
+}
+
+.trading-interface {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #181A20;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  border: 1px solid var(--border-color);
+}
+
+.chart-container {
+  background: var(--chart-bg);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  height: 600px;
+  position: relative;
+  border: 1px solid var(--border-color);
+}
+
+.tradingview-widget-container {
+  height: 100%;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+button {
+  background: var(--theme-color);
+  color: #000000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button#startBtn {
+  background: #2ebd85; /* Green */
+  color: #FFFFFF; /* White text */
+}
+
+button#stopBtn {
+  background: #f6465d; /* Red */
+  color: #FFFFFF; /* White text */
+}
+
+button#resetBtn {
+  background: #03224C; /* Blue */
+  color: #FFFFFF; /* White text */
+}
+
+button:disabled {
+  background: #2B3139;
+  color: #848E9C;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.status {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+}
+
+select {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  font-size: 1rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23848E9C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+}
+
+select:hover {
+  border-color: var(--theme-color);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 2px rgba(240,185,11,0.2);
+}
+
+.param-card {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  word-break: break-word;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.param-card.active {
+  border: 1px solid var(--theme-color);
+  background-color: rgba(240, 185, 11, 0.1);
+}
+
+.param-value {
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: bold;
+  color: var(--theme-color);
+}
+	 
+.param-card-info {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  word-break: break-word;
+  cursor: default; /* Désactive le pointeur */
+  user-select: none; /* Empêche la sélection */
+  transition: background 0.2s ease;
+}
+
+.param-card-info .param-value {
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: bold;
+  color: var(--theme-color);
+} 
+
+@media (max-width: 380px) {
+  .metrics-container,
+  .params {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .param-card {
+    padding: 0.75rem;
+  }
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #848E9C;
+}
+
+.alert {
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+}
+
+.alert-success {
+  background: #0ECB81;
+  color: #000000;
+}
+
+.alert-warning {
+  background: #F6465D;
+  color: #ffffff;
+}
+
+.metrics-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .metrics-container {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+}
+
+.params {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.params-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.trading-params {
+  margin-bottom: 0.5rem;
+}
+
+.order-params {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .params-row {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .params-row {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .param-card {
+    padding: 0.75rem;
+  }
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.api-inputs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.api-input {
+  width: 200px;
+  min-width: 150px;
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+
+.api-input:hover {
+  border-color: var(--theme-color);
+}
+
+.api-input:focus {
+  outline: none;
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 2px rgba(240,185,11,0.2);
+}
+
+.api-input:disabled {
+  background: #2B3139;
+  color: #848E9C;
+  cursor: not-allowed;
+}
+
+.refresh-pairs-btn {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-pairs-btn:hover {
+  border-color: var(--theme-color);
+  background: var(--border-color);
+}
+
+.trading-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.param-input-group {
+  display: flex;
+  width: 100%;
+}
+
+.param-label {
+  color: #848E9C;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.trading-params .api-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.connected {
+  background: #0ECB81 !important;
+}
+
+.disconnected {
+  background: #F6465D !important;
+  color: white !important;
+}
+
+.settings-header {
+  margin: 1rem 0;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--theme-color);
+  color: #000000;
+  border: 1px solid var(--theme-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.settings-toggle:hover {
+  border-color: #000000;
+}
+
+.settings-toggle .arrow {
+  transition: transform 0.2s;
+}
+
+.settings-toggle.active .arrow {
+  transform: rotate(180deg);
+}
+
+.settings-panel {
+  display: none;
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.settings-panel.active {
+  display: block;
+}
+
+.profit {
+  color: #0ECB81;
+}
+
+.loss {
+  color: #F6465D;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-controls select {
+  min-width: 140px;
+  max-width: 180px;
+}
+
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-controls select {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.pair-count {
+  color: var(--theme-color);
+  margin: 0 1rem;
+  font-weight: bold;
+}
+
+.trading-styles {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.trading-styles label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 1rem;
+    cursor: pointer;
+}
+
+.trading-styles label:last-child {
+    margin-right: 0;
+}
+    </style>
+</head>
+<body>
+	<!-- Contenu de votre application -->
+  <div id="installBanner">
+    Voulez-vous installer cette application ?
+    <button id="installButton">Installer</button>
+  </div>
+	<script>
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prévenir l'événement par défaut
+      e.preventDefault();
+      // Enregistrer l'événement pour pouvoir l'appeler plus tard
+      deferredPrompt = e;
+      // Afficher la bannière d'installation
+      document.getElementById('installBanner').style.display = 'block';
+    });
+
+    document.getElementById('installButton').addEventListener('click', () => {
+      // Afficher la bannière d'installation
+      deferredPrompt.prompt();
+      // Attendre que l'utilisateur réponde à la bannière
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the A2HS prompt');
+        } else {
+          console.log('User dismissed the A2HS prompt');
+        }
+        deferredPrompt = null;
+        // Masquer la bannière après la réponse de l'utilisateur
+        document.getElementById('installBanner').style.display = 'none';
+      });
+    });
+  </script>
+<script src="app.js"></script>
+	
+	
+<div class="trading-interface">
+  <div class="header-container">
+    <h1 class="text-2xl font-bold">Binance Spot Bot</h1>
+    <div class="api-inputs">
+      <input type="password" id="apiKey" placeholder="API Key" class="api-input">
+      <input type="password" id="secretKey" placeholder="Secret Key" class="api-input">
+      <button id="connectBtn" class="connect-btn disconnected">Connect</button>
+    </div>
+  </div>
+
+    <div class="settings-header">
+        <button id="toggleSettings" class="settings-toggle">
+
+      <span>Settings</span>
+      <svg class="arrow" width="12" height="12" viewBox="0 0 12 12">
+        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" fill="none"/>
+      </svg>
+    </button>
+  </div>
+
+    <div id="settingsPanel" class="settings-panel">
+
+    <div class="trading-mode-controls" style="margin-bottom: 1rem;">
+      <label style="display: inline-flex; align-items: center; margin-right: 1rem; cursor: pointer;">
+        <input type="radio" name="tradingMode" value="manual" id="manualTrading" checked style="margin-right: 0.5rem;">
+        Manual Trading
+      </label>
+      <label style="display: inline-flex; align-items: center; cursor: pointer;">
+        <input type="radio" name="tradingMode" value="automatic" id="automaticTrading" style="margin-right: 0.5rem;">
+        Automated Trading
+      </label>
+    </div>
+    <div class="chart-mode-controls" style="margin-bottom: 1rem;">
+      <label style="display: inline-flex; align-items: center; margin-right: 1rem; cursor: pointer;">
+        <input type="radio" name="chartMode" value="tradingview" id="tradingviewChart" checked style="margin-right: 0.5rem;">
+        TradingView Chart
+      </label>
+      <label style="display: inline-flex; align-items: center; cursor: pointer;">
+        <input type="radio" name="chartMode" value="canvas" id="canvasChart" style="margin-right: 0.5rem;">
+        Canvas Chart
+      </label>
+    </div>
+    <div id="manualMessage" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.25rem; color: var(--text-color);">
+      The bot will execute trades based on your selected settings for Amount, Take Profit, and Stop Loss values. Entry and exit points will be determined by these parameters.
+    </div>
+    <div id="automatedMessage" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.25rem; color: var(--text-color);">
+      The bot will automatically make trading decisions based on a comprehensive strategy using all selected indicators (RSI, MACD, ADX, Stochastic, VWAP, Bollinger Bands, Williams %R, and OBV). Trades will be executed when multiple indicators align for optimal entry points.
+    </div>
+    <div class="controls trading-params">
+      <div class="param-input-group">
+        <input type="number" id="lotSize" placeholder="Amount (USDT)" class="api-input" value="10000" step="0.01">
+      </div>
+      <div class="param-input-group">
+        <input type="number" id="takeProfit" placeholder="Take Profit" class="api-input" value="1" step="1">
+      </div>
+      <div class="param-input-group">
+        <input type="number" id="stopLoss" placeholder="Stop Loss" class="api-input" value="1" step="1">
+      </div>
+      <div class="param-input-group">
+        <input type="number" id="ttp" placeholder="TTP" class="api-input" value="0.02" step="0.01">
+      </div>
+      <div class="param-input-group">
+        <input type="number" id="tsl" placeholder="TSL" class="api-input" value="0.02" step="0.01">
+      </div>
+    </div>
+  </div>
+  
+  <div class="chart-container" style="display: flex; justify-content: space-between;">
+    <!-- TradingView Widgets BEGIN -->
+    <div class="tradingview-widget-container" style="flex: 1; margin-right: 0.5rem;">
+      <div id="tradingview_chart_m15"></div>
+    </div>
+    <div class="tradingview-widget-container" style="flex: 1; margin: 0 0.5rem;">
+      <div id="tradingview_chart_h1"></div>
+    </div>
+    <div class="tradingview-widget-container" style="flex: 1; margin-left: 0.5rem;">
+      <div id="tradingview_chart_h4"></div>
+    </div>
+    <!-- TradingView Widgets END -->
+  </div>
+
+    <div class="controls mb-4" style="display: flex; align-items: center; gap: 1rem;">
+        <div class="trading-styles">
+            <label>
+                <input type="radio" name="tradingStyle" value="speedScalping" id="speedScalping" checked style="margin-right: 0.5rem;">
+                Scalp
+            </label>
+            <label>
+                <input type="radio" name="tradingStyle" value="scalping" id="scalping" style="margin-right: 0.5rem;">
+                Day
+            </label>
+            <label>
+                <input type="radio" name="tradingStyle" value="intraday" id="intraday" style="margin-right: 0.5rem;">
+                Swing
+            </label>
+        </div>
+
+    <select id="pairSelect" class="text-white rounded-lg">
+      <!-- pairs will be populated here -->
+    </select>
+    <span id="pairCount" class="pair-count">0 pairs</span>
+    <button class="refresh-pairs-btn">Refresh Pairs</button>
+  </div>
+  <div class="filter-controls">
+    <select id="volumeFilter" class="api-input">
+        <option value="0">All Volumes</option>
+        <option value="1000000">Volume > 1M USDT</option>
+        <option value="5000000">Volume > 5M USDT</option>
+        <option value="10000000">Volume > 10M USDT</option>
+    </select>
+    <select id="tradesFilter" class="api-input">
+        <option value="0">All Trades</option>
+        <option value="1000">Trades > 1K</option>
+        <option value="5000">Trades > 5K</option>
+        <option value="10000">Trades > 10K</option>
+    </select>
+    <select id="changeFilter" class="api-input">
+        <option value="0">All Changes</option>
+        <option value="1">Change > 1%</option>
+        <option value="3">Change > 3%</option>
+        <option value="5">Change > 5%</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">Start Trading</button>
+    <button id="stopBtn" disabled>Stop Trading</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <div class="status" id="statusPanel">
+    Waiting for market conditions...
+  </div>
+
+  <div class="settings-header">
+    <button id="toggleIndicators" class="settings-toggle">
+      <span>Indicators</span>
+      <svg class="arrow" width="12" height="12" viewBox="0 0 12 12">
+        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" fill="none"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="indicatorsPanel" class="settings-panel">
+	  <div> In manual mode: Indicators display real-time data on a 1h Timeframe.<br>
+	  In automatic mode: Select one or more indicators, then press Start trading.
+	  The buy signal will be triggered only if ALL selected indicators send the signal. </div>
+    <div class="metrics-container">
+      <div class="param-card">
+        <div class="metric-label">RSI</div>
+        <div class="param-value" id="rsiValue">--</div>
+      </div>
+      <div class="param-card">
+        <div class="metric-label">EMA20 & EMA50</div>
+        <div class="param-value" id="emaValue">--</div>
+      </div>
+	  <div class="param-card">
+        <div class="metric-label">MACD</div>
+        <div class="param-value" id="macdValue">--</div>
+      </div>	
+	  <div class="param-card">
+        <div class="metric-label">STOCHASTIC</div>
+        <div class="param-value" id="stochValue">--</div>
+      </div>	
+	  <div class="param-card">
+        <div class="metric-label">BOLLINGER BANDS</div>
+        <div class="param-value" id="bollingerValue">--</div>
+      </div>	
+      <div class="param-card">
+        <div class="metric-label">ADX</div>
+        <div class="param-value" id="adxValue">--</div>
+      </div>
+      <div class="param-card">
+        <div class="metric-label">VWAP</div>
+        <div class="param-value" id="vwapValue">--</div>
+      </div>
+      <div class="param-card">
+        <div class="metric-label">OBV</div>
+        <div class="param-value" id="obvValue">--</div>
+      </div>
+      <div class="param-card">
+        <div class="metric-label">Williams %R</div>
+        <div class="param-value" id="williamsValue">--</div>
+      </div>      
+    </div>
+  </div>
+
+<div class="params">
+    <div class="params-row trading-params">
+        <div class="param-card-info">
+            <div>Amount</div>
+            <div class="param-value" id="lotSizeValue">10000</div>
+        </div>
+        <div class="param-card-info">
+            <div>Take Profit</div>
+            <div class="param-value" id="takeProfitValue">1</div>
+        </div>
+        <div class="param-card-info">
+            <div>Stop Loss</div>
+            <div class="param-value" id="stopLossValue">1</div>
+        </div>
+        <div class="param-card-info">
+            <div>TTP</div>
+            <div class="param-value" id="ttpValue">0.02</div>
+        </div>
+        <div class="param-card-info">
+            <div>TSL</div>
+            <div class="param-value" id="tslValue">0.02</div>
+        </div>
+    </div>
+    
+    <div class="params-row order-params">
+        <div class="param-card-info">
+            <div>Last Order</div>
+            <div class="param-value" id="lastOrderValue">--</div>
+        </div>
+        <div class="param-card-info">
+            <div>Buy Price</div>
+            <div class="param-value" id="buyPrice">--</div>
+        </div>
+        <div class="param-card-info">
+            <div>Current Price</div>
+            <div class="param-value" id="currentPrice">--</div>
+        </div>
+        <div class="param-card-info">
+            <div>Sell Price</div>
+            <div class="param-value" id="sellPrice">--</div>
+        </div>
+        <div class="param-card">
+            <div>Profit/Loss</div>
+            <div class="param-value profit" id="pnlValue">--</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+let selectedPair = 'BTCUSDT'; // Default pair 
+let isTrading = false;
+let currentPnL = 0;
+let websocket = null;
+let closePrices = [];
+let macd = null;
+let entryPrice = 0;
+let positionSize = 0;
+let tradingMode = 'manual';
+let selectedIndicators = new Set();
+
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const resetBtn = document.getElementById('resetBtn');
+const pairSelect = document.getElementById('pairSelect');
+const connectBtn = document.getElementById('connectBtn');
+const apiKey = document.getElementById('apiKey');
+const secretKey = document.getElementById('secretKey');
+
+// New inputs for trading parameters
+const lotSizeInput = document.getElementById('lotSize');
+const takeProfitInput = document.getElementById('takeProfit');
+const stopLossInput = document.getElementById('stopLoss');
+const ttpInput = document.getElementById('ttp');
+const tslInput = document.getElementById('tsl');
+
+// Add direct element references for updating the parameter cards
+const lotSizeValue = document.getElementById('lotSizeValue');
+const takeProfitValue = document.getElementById('takeProfitValue');
+const stopLossValue = document.getElementById('stopLossValue');
+const ttpValue = document.getElementById('ttpValue');
+const tslValue = document.getElementById('tslValue');
+
+// Add event listeners to update the parameter cards
+lotSizeInput.addEventListener('change', (e) => {
+  lotSizeValue.textContent = e.target.value;
+});
+
+takeProfitInput.addEventListener('change', (e) => {
+  takeProfitValue.textContent = e.target.value;
+});
+
+stopLossInput.addEventListener('change', (e) => {
+  stopLossValue.textContent = e.target.value;
+});
+
+ttpInput.addEventListener('change', (e) => {
+  ttpValue.textContent = e.target.value ? e.target.value : '--';
+});
+
+tslInput.addEventListener('change', (e) => {
+  tslValue.textContent = e.target.value ? e.target.value : '--';
+});
+
+// Event listeners for clicking on param-card elements
+document.querySelectorAll('.param-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const indicatorId = card.querySelector('.param-value').id.replace('Value', '');
+    if (selectedIndicators.has(indicatorId)) {
+      selectedIndicators.delete(indicatorId);
+      card.classList.remove('active');
+    } else {
+      selectedIndicators.add(indicatorId);
+      card.classList.add('active');
+    }
+  });
+});
+// LIVE 
+
+
+
+// Function to calculate percentage change from entry price
+function calculatePercentageChange(current, entry) {
+  return ((current - entry) / entry) * 100;
+}
+
+// Désactive le bouton "Start Trading" au chargement si en mode automatique
+function initializeStartButtonState() {
+    if (tradingMode === 'automatic') {
+        startBtn.disabled = true;
+        startBtn.style.backgroundColor = '#2B3139'; // Gris
+        startBtn.style.color = '#848E9C'; // Texte gris
+    } else {
+        startBtn.disabled = false;
+        startBtn.style.backgroundColor = '#2ebd85'; // Vert
+        startBtn.style.color = '#FFFFFF'; // Texte blanc
+    }
+}
+
+// Fonction pour vérifier le nombre d'indicateurs sélectionnés en mode automatique
+function updateStartButtonState() {
+    const selectedIndicatorsCount = document.querySelectorAll('.metrics-container .param-card.active').length;
+
+    if (tradingMode === 'automatic') {
+        if (selectedIndicatorsCount > 0) {
+            startBtn.disabled = false;
+            startBtn.style.backgroundColor = '#2ebd85'; // Vert
+            startBtn.style.color = '#FFFFFF'; // Texte blanc
+            document.getElementById('statusPanel').textContent = "Ready to start auto trading";
+        } else {
+            startBtn.disabled = true;
+            startBtn.style.backgroundColor = '#2B3139'; // Gris
+            startBtn.style.color = '#848E9C'; // Texte gris
+            document.getElementById('statusPanel').textContent = "Error: No indicator selected, please select at least 1.";
+        }
+    } else {
+        // En mode manuel, le bouton reste activable
+        startBtn.disabled = false;
+        startBtn.style.backgroundColor = '#2ebd85'; // Vert
+        startBtn.style.color = '#FFFFFF'; // Texte blanc
+    }
+}
+
+// Ajoute un écouteur d'événements pour chaque `param-card`
+document.querySelectorAll('.metrics-container .param-card').forEach(card => {
+    card.addEventListener('click', () => {
+        // Active ou désactive l'indicateur en fonction de son état actuel
+        card.classList.toggle('active');
+        
+        // Mets à jour l'état du bouton "Start Trading" en fonction des indicateurs sélectionnés
+        updateStartButtonState();
+    });
+});
+
+// Ajoute des écouteurs pour les boutons de mode de trading
+document.getElementById('manualTrading').addEventListener('click', () => {
+    tradingMode = 'manual';
+    document.getElementById('statusPanel').textContent = "Manual trading mode enabled.";
+    initializeStartButtonState();
+});
+
+document.getElementById('automaticTrading').addEventListener('click', () => {
+    tradingMode = 'automatic';
+    document.getElementById('statusPanel').textContent = "Auto trading mode enabled.Please select one or more indicators ";
+    initializeStartButtonState();
+});
+
+// Appel initial de la fonction pour définir l'état du bouton au chargement de la page
+initializeStartButtonState();
+
+function handleTradingLogic(price, indicators) {
+    let ttp = parseFloat(ttpInput.value) || 0;
+    let tsl = parseFloat(tslInput.value) || 0;
+
+    // Récupérer les indicateurs activés dans la `metrics-container`
+    const selectedIndicators = new Set();
+    document.querySelectorAll('.metrics-container .param-card.active .param-value').forEach(card => {
+        selectedIndicators.add(card.id.replace('Value', '')); // ex : "rsi", "ema"
+    });
+
+    // Empêcher l'évaluation si le trading n'a pas démarré ou si le mode est incorrect
+    if (!isTrading || (tradingMode !== 'automatic' && tradingMode !== 'manual')) {
+        return; // Ignorer la logique si le trading n'est pas actif ou le mode n'est pas automatique ou manuel
+    }
+
+    // Vérification des indicateurs sélectionnés
+    if (selectedIndicators.size === 0 && tradingMode === 'automatic') {
+        document.getElementById('statusPanel').textContent = "Error: Please select one or more indicators for automatic trading.";
+        return;
+    }
+
+    // Débogage : Afficher les indicateurs sélectionnés
+    console.log("Selected Indicators:", Array.from(selectedIndicators));
+
+    // Récupérer les valeurs des indicateurs à partir du DOM
+    const rsiValue = parseFloat(document.getElementById('rsiValue').textContent) || null;
+    const ema20Value = parseFloat(document.getElementById('emaValue').textContent.split('/')[0]) || null;
+    const ema50Value = parseFloat(document.getElementById('emaValue').textContent.split('/')[1]) || null;
+    const macdLine = parseFloat(document.getElementById('macdValue').textContent.split('/')[0]) || null;
+    const macdSignal = parseFloat(document.getElementById('macdValue').textContent.split('/')[1]) || null;
+    const adxValue = parseFloat(document.getElementById('adxValue').textContent) || null;
+    const bollingerUpper = parseFloat(document.getElementById('bollingerValue').textContent.split('/')[0]) || null;
+    const bollingerLower = parseFloat(document.getElementById('bollingerValue').textContent.split('/')[1]) || null;
+    const vwapValue = parseFloat(document.getElementById('vwapValue').textContent) || null;
+    const obvValue = parseFloat(document.getElementById('obvValue').textContent) || null;
+    const williamsValue = parseFloat(document.getElementById('williamsValue').textContent) || null;
+
+    // Débogage : Afficher les valeurs des indicateurs
+    console.log("RSI Value:", rsiValue);
+    console.log("EMA20 Value:", ema20Value);
+    console.log("EMA50 Value:", ema50Value);
+    console.log("MACD Line:", macdLine);
+    console.log("MACD Signal:", macdSignal);
+    console.log("ADX Value:", adxValue);
+    console.log("Bollinger Upper:", bollingerUpper);
+    console.log("Bollinger Lower:", bollingerLower);
+    console.log("VWAP Value:", vwapValue);
+    console.log("OBV Value:", obvValue);
+    console.log("Williams Value:", williamsValue);
+
+    // Conditions pour le trading automatique
+    let allConditionsMet = true;
+
+    // Vérification dynamique des indicateurs sélectionnés en mode automatique
+    if (tradingMode === 'automatic') {
+        if (selectedIndicators.has('rsi') && !(rsiValue > 30 && rsiValue < 70)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('ema') && !(ema20Value > ema50Value)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('macd') && !(macdLine > macdSignal)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('adx') && !(adxValue > 20)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('bollinger') && !(price > bollingerLower && price < bollingerUpper)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('vwap') && !(price > vwapValue)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('obv') && !(obvValue > 0)) {
+            allConditionsMet = false;
+        }
+        if (selectedIndicators.has('williams') && !(williamsValue < -20 && williamsValue > -80)) {
+            allConditionsMet = false;
+        }
+    }
+
+    // Déclencher un ordre d'achat si toutes les conditions sont remplies et entryPrice est 0
+    if (allConditionsMet && entryPrice === 0) {
+        entryPrice = price; // Initialise le prix d'entrée
+
+        if (typeof executeBuySignal === "function") {
+            executeBuySignal(price);
+            document.getElementById('statusPanel').textContent = `Buy signal triggered at ${price}`;
+        } else {
+            console.error("Error: The executeBuySignal function is not defined.");
+            document.getElementById('statusPanel').textContent = "Error: The executeBuySignal function is not defined.";
+            return;
+        }
+    }
+
+    // Vérification de Take Profit et Stop Loss, seulement si entryPrice est défini
+    if (entryPrice > 0) {
+        const percentChange = calculatePercentageChange(price, entryPrice);
+        const takeProfitThreshold = parseFloat(takeProfitInput.value) || 0;
+        const stopLossThreshold = -(parseFloat(stopLossInput.value) || 0);
+
+        // Vérification de Take Profit et Stop Loss pour le trading manuel
+        if (tradingMode === 'manual') {
+            if (percentChange >= takeProfitThreshold) {
+                executeSellSignal(price);
+                document.getElementById('statusPanel').textContent = `Take Profit Triggered: ${percentChange.toFixed(2)}%`;
+                entryPrice = 0; // Réinitialiser entryPrice après vente
+            } else if (percentChange <= stopLossThreshold) {
+                executeSellSignal(price);
+                document.getElementById('statusPanel').textContent = `Stop Loss Triggered: ${percentChange.toFixed(2)}%`;
+                entryPrice = 0; // Réinitialiser entryPrice après vente
+            }
+        }
+
+        // Vérification de Take Profit et Stop Loss pour le trading automatique
+        if (tradingMode === 'automatic') {
+            if (percentChange >= takeProfitThreshold) {
+                executeSellSignal(price);
+                document.getElementById('statusPanel').textContent = `Take Profit Triggered: ${percentChange.toFixed(2)}%`;
+                entryPrice = 0; // Réinitialiser entryPrice après vente
+            } else if (percentChange <= stopLossThreshold) {
+                executeSellSignal(price);
+                document.getElementById('statusPanel').textContent = `Stop Loss Triggered: ${percentChange.toFixed(2)}%`;
+                entryPrice = 0; // Réinitialiser entryPrice après vente
+            }
+        }
+    }
+}
+
+
+// Extend or create function for executing a sell signal
+function executeSellSignal(price) {
+    entryPrice = 0; // Reset entry price
+    positionSize = 0; // Reset position size
+
+    document.getElementById('lastOrderValue').textContent = 'SELL';
+    document.getElementById('sellPrice').textContent = price.toFixed(8);
+
+    isTrading = false;
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+
+    // Update the UI buttons
+    startBtn.style.backgroundColor = '#2ebd85'; // Reset Start Trading button
+    startBtn.style.color = '#FFFFFF'; // White text
+    stopBtn.style.backgroundColor = '#2B3139'; // Greyed out Stop Trading button
+    stopBtn.style.color = '#848E9C'; // Grey text
+}
+
+// Update the updateIndicators function to handle null values safely
+function updateIndicators({
+    bollingerBands = null,
+    adx = null,
+    stoch = null,
+    vwap = null,
+    macd = null,
+    obv = null,
+    williams = null
+}) {
+    // Safely update Bollinger Bands
+    const bollingerElement = document.getElementById('bollingerValue');
+    if (bollingerBands?.upper?.length > 0 && bollingerBands?.lower?.length > 0) {
+        bollingerElement.textContent = 
+            `${bollingerBands.upper.at(-1).toFixed(8)} / ${bollingerBands.lower.at(-1).toFixed(8)}`;
+    } else {
+        bollingerElement.textContent = '--';
+    }
+
+    // Safely update ADX
+    const adxElement = document.getElementById('adxValue');
+    adxElement.textContent = (adx?.length && adx.at(-1) !== null) 
+        ? adx.at(-1).toFixed(8) 
+        : '--';
+
+    // Safely update Stochastic
+    const stochElement = document.getElementById('stochValue');
+    if (stoch?.k?.length && stoch?.d?.length) {
+        stochElement.textContent = 
+            `${stoch.k.at(-1).toFixed(8)}/${stoch.d.at(-1).toFixed(8)}`;
+    } else {
+        stochElement.textContent = '--';
+    }
+
+    // Safely update VWAP
+    const vwapElement = document.getElementById('vwapValue');
+    vwapElement.textContent = (vwap?.length && vwap.at(-1) !== null) 
+        ? vwap.at(-1).toFixed(8) 
+        : '--';
+
+    // Safely update MACD
+    const macdElement = document.getElementById('macdValue');
+    if (macd?.line?.length && macd?.signal?.length) {
+        macdElement.textContent = 
+            `${macd.line.at(-1).toFixed(8)}/${macd.signal.at(-1).toFixed(8)}`;
+    } else {
+        macdElement.textContent = '--';
+    }
+
+    // Safely update OBV
+    const obvElement = document.getElementById('obvValue');
+    obvElement.textContent = (obv?.length && obv.at(-1) !== null) 
+        ? obv.at(-1).toFixed(0) 
+        : '--';
+
+    // Safely update Williams %R
+    const williamsElement = document.getElementById('williamsValue');
+    williamsElement.textContent = (williams?.length && williams.at(-1) !== null) 
+        ? williams.at(-1).toFixed(8) 
+        : '--';
+}
+
+// Update the fetchData function or wherever trade decision logic resides
+async function fetchData() {
+    try {
+        const klineData = await fetchRecentKlines(selectedPair);
+
+        if (!klineData || !klineData.closes) {
+            throw new Error(`Unable to fetch kline data for ${selectedPair}`);
+        }
+
+        // Calculate indicators with null checks
+        const indicators = {
+            bollingerBands: calculateBollingerBands(klineData.closes),
+            adx: calculateADX(klineData),
+            stoch: calculateStochastic(klineData),
+            vwap: calculateVWAP(klineData),
+            macd: calculateMACD(klineData.closes),
+            obv: calculateOBV(klineData),
+            williams: calculateWilliamsR(klineData)
+        };
+
+        // Update UI with indicators, handling potential null values
+        updateIndicators(indicators);
+
+        // Update chart based on selected type
+        if (document.getElementById('canvasChart').checked) {
+            updateCanvasChart();
+        }
+
+    } catch (error) {
+        console.error('Error in fetchData:', error);
+        document.getElementById('statusPanel').textContent = `Error: ${error.message}`;
+        
+        // Update indicators with null values to show '--'
+        updateIndicators({});
+    }
+}
+
+// Modify the fetchPairs function to update charts after loading pairs
+async function fetchPairs() {
+    try {
+        const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+        if (!response.ok) throw new Error("Failed to fetch trading pairs");
+
+        const data = await response.json();
+        
+        // Get filter values
+        const minVolume = parseFloat(document.getElementById("volumeFilter").value);
+        const minTrades = parseFloat(document.getElementById("tradesFilter").value);
+        const minChange = parseFloat(document.getElementById("changeFilter").value);
+
+        // Filter USDT pairs that meet the criteria
+        const filteredPairs = data
+            .filter(ticker => 
+                ticker.symbol.endsWith("USDT") &&
+                parseFloat(ticker.volume) * parseFloat(ticker.lastPrice) > 0 && 
+                parseFloat(ticker.count) > 0 && 
+                parseFloat(ticker.volume) * parseFloat(ticker.lastPrice) >= minVolume &&
+                parseFloat(ticker.count) >= minTrades &&
+                Math.abs(parseFloat(ticker.priceChangePercent)) >= minChange
+            )
+            .sort((a, b) => 
+                parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent)
+            );
+
+        const pairSelect = document.getElementById("pairSelect");
+        pairSelect.innerHTML = "";
+
+        filteredPairs.forEach(pair => {
+            const option = document.createElement("option");
+            option.value = pair.symbol;
+            const volume = (parseFloat(pair.volume) * parseFloat(pair.lastPrice)).toFixed(0);
+            const change = parseFloat(pair.priceChangePercent).toFixed(2);
+            
+            const changeColor = (change > 0) ? 'green' : 'red';
+
+            option.innerHTML = `
+                ${pair.symbol.replace("USDT", "/USDT")} 
+                <span style="color:${changeColor};">${change}%</span> 
+                | Vol: ${volume}$ 
+                | ${pair.count} trades`;
+            pairSelect.appendChild(option);
+        });
+
+        // Update pair count
+        const pairCountSpan = document.getElementById('pairCount');
+        if (pairCountSpan) {
+            pairCountSpan.textContent = `${filteredPairs.length} pairs`;
+        }
+
+        // Set selectedPair to the first pair in the list and update charts
+        if (filteredPairs.length > 0) {
+            selectedPair = filteredPairs[0].symbol;
+            pairSelect.value = selectedPair;
+            updateTradingViewCharts("15", "60", "240");
+            await fetchData();
+        }
+
+        document.getElementById('statusPanel').textContent = "Trading pairs updated successfully";
+    } catch (error) {
+        console.error("Error fetching pairs:", error);
+        document.getElementById('statusPanel').textContent = `Error updating pairs: ${error.message}`;
+    }
+}
+
+// Define tradingviewConfig once
+const tradingviewConfig = {
+    "width": "100%",
+    "height": "100%",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "toolbar_bg": "#f1f3f6",
+    "enable_publishing": false,
+    "hide_side_toolbar": true,
+    "allow_symbol_change": true,
+    "studies": [
+        "RSI@tv-basicstudies",
+        "MACD@tv-basicstudies",
+        "StochasticRSI@tv-basicstudies",
+        "Volume@tv-basicstudies",
+        "BB@tv-basicstudies"
+    ]
+};
+
+// Update the function to use tradingviewConfig
+function updateTradingViewCharts(interval1, interval2, interval3) {
+    new TradingView.widget({
+        ...tradingviewConfig,
+        "interval": interval1,
+        "symbol": "BINANCE:" + selectedPair,
+        "container_id": "tradingview_chart_m15"
+    });
+
+    new TradingView.widget({
+        ...tradingviewConfig,
+        "interval": interval2,
+        "symbol": "BINANCE:" + selectedPair,
+        "container_id": "tradingview_chart_h1"
+    });
+
+    new TradingView.widget({
+        ...tradingviewConfig,
+        "interval": interval3,
+        "symbol": "BINANCE:" + selectedPair,
+        "container_id": "tradingview_chart_h4"
+    });
+}
+
+// Event listeners for changing chart intervals based on user's new time-frame settings
+document.getElementById('speedScalping').addEventListener('click', () => {
+    updateTradingViewCharts("5", "15", "60"); // Updated intervals for Scalp
+});
+
+document.getElementById('scalping').addEventListener('click', () => {
+    updateTradingViewCharts("15", "60", "240"); // Updated intervals for Day
+});
+
+document.getElementById('intraday').addEventListener('click', () => {
+    updateTradingViewCharts("240", "1D", "1W"); // Updated intervals for Swing
+});
+
+// Ensure the charts are refreshed when the pair changes
+pairSelect.addEventListener('change', async (e) => {
+    selectedPair = e.target.value;
+    updateTradingViewCharts("15", "60", "240"); // Default to Intraday on pair change
+    await fetchData();
+    if (isTrading) {
+        connectWebSocket();
+    }
+    document.getElementById('statusPanel').textContent = `Switched to ${selectedPair}`;
+});
+
+// Initial call when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    updateTradingViewCharts("15", "60", "240"); // Set initial charts to default
+    lotSizeValue.textContent = '10000';
+    takeProfitValue.textContent = '1';
+    stopLossValue.textContent = '1';
+    ttpValue.textContent = '0.02';
+    tslValue.textContent = '0.02';
+});
+	
+
+// Function to fetch trading pairs from Binance
+async function fetchPairs() {
+    try {
+        const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+        if (!response.ok) throw new Error("Failed to fetch trading pairs");
+
+        const data = await response.json();
+        
+        // Get filter values
+        const minVolume = parseFloat(document.getElementById("volumeFilter").value);
+        const minTrades = parseFloat(document.getElementById("tradesFilter").value);
+        const minChange = parseFloat(document.getElementById("changeFilter").value);
+
+        // Filter USDT pairs that meet the criteria
+        const filteredPairs = data
+            .filter(ticker => 
+                ticker.symbol.endsWith("USDT") &&
+                parseFloat(ticker.volume) * parseFloat(ticker.lastPrice) > 0 && // Exclude 0 volume in USD
+                parseFloat(ticker.count) > 0 && // Exclude pairs with 0 trades
+                parseFloat(ticker.volume) * parseFloat(ticker.lastPrice) >= minVolume &&
+                parseFloat(ticker.count) >= minTrades &&
+                Math.abs(parseFloat(ticker.priceChangePercent)) >= minChange
+            )
+            .sort((a, b) => 
+                parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent) // Sort by price change percent
+            );
+
+        const pairSelect = document.getElementById("pairSelect");
+        pairSelect.innerHTML = ""; // Clear existing options
+
+        filteredPairs.forEach(pair => {
+            const option = document.createElement("option");
+            option.value = pair.symbol;
+            const volume = (parseFloat(pair.volume) * parseFloat(pair.lastPrice)).toFixed(0);
+            const change = parseFloat(pair.priceChangePercent).toFixed(2);
+            
+            // Conditional styling for change percentage
+            const changeColor = (change > 0) ? 'green' : 'red';
+
+            option.innerHTML = `
+                ${pair.symbol.replace("USDT", "/USDT")} 
+                <span style="color:${changeColor};">${change}%</span> 
+                | Vol: ${volume}$ 
+                | ${pair.count} trades`;
+            pairSelect.appendChild(option);
+        });
+
+        // Update pair count
+        const pairCountSpan = document.getElementById("pairCount");
+        if (pairCountSpan) {
+            pairCountSpan.textContent = `${filteredPairs.length} pairs`;
+        }
+
+        // Set selectedPair to the first pair in the list and update charts
+        if (filteredPairs.length > 0) {
+            selectedPair = filteredPairs[0].symbol;
+            pairSelect.value = selectedPair;
+            updateTradingViewCharts("15", "60", "240");
+            await fetchData();
+        }
+
+        document.getElementById("statusPanel").textContent = "Trading pairs updated successfully"; 
+    } catch (error) {
+        console.error("Error fetching pairs:", error);
+        document.getElementById("statusPanel").textContent = `Error updating pairs: ${error.message}`;
+    }
+}
+
+// Add event listeners for filters
+document.getElementById("volumeFilter").addEventListener("change", fetchPairs);
+document.getElementById("tradesFilter").addEventListener("change", fetchPairs);
+document.getElementById("changeFilter").addEventListener("change", fetchPairs);
+
+function connectWebSocket() {
+    if (websocket) {
+        websocket.close();
+    }
+
+    websocket = new WebSocket(`wss://stream.binance.com:9443/ws/${selectedPair.toLowerCase()}@ticker`);
+    
+    websocket.onmessage = async (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (!data || !data.c) {
+                throw new Error('Invalid websocket data received');
+            }
+
+            const price = parseFloat(data.c);
+            const volume = parseFloat(data.v);
+            
+            // Update current price with null check
+            const currentPriceElement = document.getElementById('currentPrice');
+            if (currentPriceElement && !isNaN(price)) {
+                currentPriceElement.textContent = price.toFixed(8);
+            }
+
+            // If Canvas chart is selected and exists, update it
+            if (document.getElementById('canvasChart')?.checked && priceChart) {
+                const timestamp = new Date().toLocaleTimeString();
+                
+                // Add new data point
+                priceChart.data.labels.push(timestamp);
+                priceChart.data.datasets[0].data.push(price);
+                
+                // Keep only last 50 points
+                if (priceChart.data.labels.length > 50) {
+                    priceChart.data.labels.shift();
+                    priceChart.data.datasets[0].data.shift();
+                }
+                
+                // Update levels with null checks
+                const takeProfit = parseFloat(takeProfitInput.value) || 0;
+                const stopLoss = parseFloat(stopLossInput.value) || 0;
+                if (!isNaN(price) && !isNaN(entryPrice) && !isNaN(takeProfit) && !isNaN(stopLoss)) {
+                    updateChartLevels(price, entryPrice, takeProfit, stopLoss);
+                }
+                
+                priceChart.update();
+            }
+            
+            // Fetch recent kline data with error handling
+            const klineData = await fetchRecentKlines(selectedPair);
+            if (!klineData || !klineData.closes?.length) {
+                throw new Error('Failed to fetch valid market data');
+            }
+
+            // Calculate indicators only if we have valid data
+            const { highs, lows, closes, volumes } = klineData;
+            closePrices = closes;
+
+            const rsi = calculateRSI(closes);
+            const ema20 = calculateEMA(closes, 20);
+            const ema50 = calculateEMA(closes, 50);
+            const indicators = {
+                bollingerBands: calculateBollingerBands(closes),
+                adx: calculateADX({ highs, lows, closes }),
+                stoch: calculateStochastic({ highs, lows, closes }, 14, 4, 3),
+                vwap: calculateVWAP({ highs, lows, closes, volumes }),
+                macd: calculateMACD(closes),
+                obv: calculateOBV({ closes, volumes }),
+                williams: calculateWilliamsR({ highs, lows, closes })
+            };
+
+            // Update UI with null checks
+            updateUI(price, rsi, ema20, ema50, indicators.macd, indicators.adx, indicators.stoch);
+            updateIndicators(indicators);
+
+            // Handle trading logic if trading is active
+            if (isTrading) {
+                handleTradingLogic(price, indicators);
+            }
+        } catch (error) {
+            console.error('Error in websocket message handler:', error);
+            document.getElementById('statusPanel').textContent = `Error: ${error.message}`;
+        }
+    };
+
+    websocket.onerror = (error) => {
+        document.getElementById('statusPanel').textContent = 'WebSocket Error: ' + error.message;
+    };
+
+    websocket.onclose = () => {
+        document.getElementById('statusPanel').textContent = 'WebSocket Connection Closed';
+    };
+}
+
+	
+function executeBuySignal(price) {
+    entryPrice = price; // Enregistre le prix d'entrée pour suivre la position
+    positionSize = parseFloat(lotSizeInput.value) || 10000; // Définit la taille de la position en USDT
+
+    const quantity = positionSize / price; // Calcule la quantité d'actif achetée
+    document.getElementById('lastOrderValue').textContent = 'BUY';
+    document.getElementById('statusPanel').textContent = `Signal d'achat automatique à ${price.toFixed(8)} - Quantité: ${quantity.toFixed(8)}`;
+    document.getElementById('buyPrice').textContent = price.toFixed(8);
+    
+    // Mises à jour d'affichage pour refléter l'achat
+    document.getElementById('pnlValue').textContent = '0.00';
+    document.getElementById('lotSizeValue').textContent = positionSize.toFixed(8) + ' USDT';
+    
+    // Mise à jour des boutons Start/Stop
+    startBtn.style.backgroundColor = '#2B3139'; // Grisé
+    startBtn.style.color = '#848E9C'; // Texte en gris
+    stopBtn.style.backgroundColor = '#f6465d'; // Rouge pour le bouton Stop
+    stopBtn.style.color = '#FFFFFF'; // Texte blanc
+
+    startBtn.disabled = true; // Désactiver Start Trading
+    stopBtn.disabled = false; // Activer Stop Trading
+}
+
+	
+	
+function updateUI(price, rsi, ema20, ema50, macd, adx, stoch) {
+    // Add null checks for price
+    if (price) {
+        document.getElementById('currentPrice').textContent = price.toFixed(8);
+    }
+
+    // Add null checks for RSI
+    if (rsi && rsi.length > 0) {
+        document.getElementById('rsiValue').textContent = rsi[rsi.length - 1].toFixed(2);
+    } else {
+        document.getElementById('rsiValue').textContent = '--';
+    }
+
+    // Add null checks for EMAs
+    if (ema20?.length > 0 && ema50?.length > 0) {
+        document.getElementById('emaValue').textContent = 
+            `${ema20[ema20.length - 1].toFixed(8)} / ${ema50[ema50.length - 1].toFixed(8)}`;
+    } else {
+        document.getElementById('emaValue').textContent = '--';
+    }
+    
+    // Update Profit/Loss with null checks
+    if (entryPrice > 0 && price) {
+        const quantity = positionSize / entryPrice; // Number of units bought
+        const priceChange = price - entryPrice;
+        const pnlPercent = (priceChange / entryPrice) * 100;
+        const pnlValue = (positionSize * pnlPercent) / 100;
+        
+        const profitLossElement = document.getElementById('pnlValue');
+        if (profitLossElement) {
+            const pnlClass = pnlValue >= 0 ? 'profit' : 'loss';
+            profitLossElement.className = `param-value ${pnlClass}`;
+            profitLossElement.textContent = `${pnlPercent.toFixed(2)}% - ${Math.abs(pnlValue).toFixed(8)} USDT`;
+        }
+        
+        const statusPanel = document.getElementById('statusPanel');
+        if (statusPanel) {
+            statusPanel.textContent = 
+                `Current Position: ${quantity.toFixed(8)} ${selectedPair.replace('USDT', '')} | P/L: ${pnlValue.toFixed(8)} USDT (${pnlPercent.toFixed(2)}%)`;
+        }
+    }
+}
+
+pairSelect.addEventListener('change', async (e) => {
+    selectedPair = e.target.value;
+    updateTradingViewCharts("15", "60", "240"); // Default to Intraday on pair change
+    
+    await fetchData();
+    
+    if (isTrading) {
+        connectWebSocket();
+    }
+    
+    document.getElementById('statusPanel').textContent = `Switched to ${selectedPair}`;
+});
+
+startBtn.addEventListener('click', async () => {
+    try {
+        if (isTrading) return; // Prevent restarting if already trading
+
+        const selectedIndicators = document.querySelectorAll('.metrics-container .param-card.active');
+        if (tradingMode === 'automatic' && selectedIndicators.length === 0) {
+            // Alerte si aucun indicateur n'est sélectionné
+            document.getElementById('statusPanel').textContent = "Error: Please select one or more indicators before starting automatic trading.";
+            return;
+        }
+
+        isTrading = true;
+        document.getElementById('statusPanel').textContent = "Trading started...";
+        
+        // Récupérer les données initiales
+        await fetchData();
+        setInterval(fetchData, 60 * 60 * 1000);
+
+        let price = parseFloat(document.getElementById('currentPrice').textContent);
+        
+        // Vérification si le prix est valide
+        if (!price || isNaN(price)) {
+            const klineData = await fetchRecentKlines(selectedPair);
+            if (klineData.closes.length) {
+                price = klineData.closes.at(-1);
+                document.getElementById('currentPrice').textContent = price.toFixed(8);
+            } else {
+                throw new Error('Failed to fetch a valid price');
+            }
+        }
+
+        connectWebSocket();
+
+        if (tradingMode === 'manual') {
+            // Logique pour le mode manuel
+            entryPrice = price;
+            positionSize = parseFloat(lotSizeInput.value) || 10000; // Taille de position par défaut en USDT
+            const quantity = positionSize / price; // Quantité réelle de l'actif
+            document.getElementById('lastOrderValue').textContent = 'BUY';
+            document.getElementById('statusPanel').textContent = `Manual Buy Signal at ${price.toFixed(8)} - Quantity: ${quantity.toFixed(8)}`;
+            document.getElementById('buyPrice').textContent = entryPrice.toFixed(8);
+            
+            // Mise à jour des affichages pertinents
+            document.getElementById('pnlValue').textContent = '0.00';
+            document.getElementById('lotSizeValue').textContent = positionSize.toFixed(8) + ' USDT';
+        }
+
+        // Mettre à jour les boutons
+        startBtn.style.backgroundColor = '#2B3139'; // Gris
+        startBtn.style.color = '#848E9C'; // Texte gris
+        stopBtn.style.backgroundColor = '#f6465d'; // Rouge
+        stopBtn.style.color = '#FFFFFF'; // Texte blanc
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    } catch (error) {
+        console.error('Error starting trading:', error);
+        document.getElementById('statusPanel').textContent = `Error starting trading: ${error.message}`;
+        isTrading = false;
+    }
+});
+
+stopBtn.addEventListener('click', () => {
+    isTrading = false;
+    if (websocket) {
+        websocket.close();
+    }
+
+    if (tradingMode === 'manual' && entryPrice > 0) {
+        const price = parseFloat(document.getElementById('currentPrice').textContent);
+        const pnl = calculateManualPnL(price);
+        document.getElementById('lastOrderValue').textContent = 'SELL';
+        document.getElementById('statusPanel').textContent = `Manual Sell Signal at ${price.toFixed(8)} - P/L: ${pnl} USD`;
+
+        // Mettre à jour le prix de vente
+        document.getElementById('sellPrice').textContent = price.toFixed(8);
+        
+        entryPrice = 0;
+    } else {
+        document.getElementById('statusPanel').textContent = 'Trading stopped';
+    }
+
+    // Réinitialiser les boutons
+    startBtn.style.backgroundColor = '#2ebd85'; // Vert initial
+    startBtn.style.color = '#FFFFFF'; // Texte blanc
+    stopBtn.style.backgroundColor = '#2B3139'; // Gris
+    stopBtn.style.color = '#848E9C'; // Texte gris
+
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+});
+
+function calculateManualPnL(price) {
+    if (!entryPrice || positionSize <= 0) return '0.00';
+
+    // Calculate percentage change
+    const priceChange = price - entryPrice;
+    const pnlPercent = (priceChange / entryPrice) * 100;
+    
+    // Calculate actual P/L value based on position size
+    const pnlValue = (positionSize * pnlPercent) / 100;
+    
+    const pnlClass = pnlValue >= 0 ? 'profit' : 'loss';
+    const formattedPnL = `${pnlPercent.toFixed(2)}% - ${Math.abs(pnlValue).toFixed(8)} USDT`;
+    
+    document.getElementById('pnlValue').textContent = formattedPnL;
+    document.getElementById('pnlValue').className = `param-value ${pnlClass}`;
+    
+    // Update parameter cards with current values
+    document.getElementById('lotSizeValue').textContent = `${positionSize.toFixed(8)} USDT`;
+    document.getElementById('takeProfitValue').textContent = takeProfitInput.value;
+    document.getElementById('stopLossValue').textContent = stopLossInput.value;
+    
+    // Update status panel with correct P/L calculation
+    document.getElementById('statusPanel').textContent = 
+        `Current P/L: ${pnlValue.toFixed(8)} USDT (${pnlPercent.toFixed(2)}%)`;
+    
+    return pnlValue.toFixed(8);
+}
+
+// Add event listeners for trading mode radio buttons
+document.getElementById('manualTrading').addEventListener('click', () => {
+    tradingMode = 'manual';
+    document.getElementById('automatedMessage').style.display = 'none';
+    document.getElementById('manualMessage').style.display = 'block';
+});
+
+document.getElementById('automaticTrading').addEventListener('click', () => {
+    tradingMode = 'automatic';
+    document.getElementById('manualMessage').style.display = 'none';
+    document.getElementById('automatedMessage').style.display = 'block';
+});
+
+// Add event listeners for parameter input changes
+lotSizeInput.addEventListener('change', (e) => {
+    lotSizeValue.textContent = `${parseFloat(e.target.value).toFixed(8)} USDT`;
+});
+
+takeProfitInput.addEventListener('change', (e) => {
+    takeProfitValue.textContent = e.target.value;
+});
+
+stopLossInput.addEventListener('change', (e) => {
+    stopLossValue.textContent = e.target.value;
+});
+//  Function to fetch trading pairs from Binance
+async function fetchData() {
+    try {
+        // Récupérer les données de kline pour la paire sélectionnée
+        const klineData = await fetchRecentKlines(selectedPair);
+
+        if (!klineData || !klineData.closes) {
+            throw new Error(`Error: Unable to fetch kline data for ${selectedPair}`);
+        }
+
+        // Extraire les données nécessaires
+        const closes = klineData.closes; // Prix de clôture
+        const highs = klineData.highs; // Hauts
+        const lows = klineData.lows; // Bas
+        const volumes = klineData.volumes; // Volumes
+
+        // Calculer tous les indicateurs
+        const indicators = {
+            rsi: calculateRSI(closes), // RSI
+            ema20: calculateEMA(closes, 20), // EMA20
+            ema50: calculateEMA(closes, 50), // EMA50
+            macd: calculateMACD(closes), // MACD
+            bollingerBands: calculateBollingerBands(closes), // Bandes de Bollinger
+            adx: calculateADX({ highs, lows, closes }), // ADX
+            stoch: calculateStochastic({ highs, lows, closes }, 14, 3, 3), // Stochastic
+            vwap: calculateVWAP({ highs, lows, closes, volumes }), // VWAP
+            obv: calculateOBV({ closes, volumes }), // OBV
+            williams: calculateWilliamsR({ highs, lows, closes }) // Williams %R
+        };
+
+        // Mettre à jour l'interface utilisateur avec tous les indicateurs
+        updateUI(
+            parseFloat(document.getElementById('currentPrice').textContent),
+            indicators.rsi,
+            indicators.ema20,
+            indicators.ema50,
+            indicators.macd,
+            indicators.adx,
+            indicators.stoch
+        );
+
+        // Mettre à jour les autres indicateurs
+        updateIndicators(indicators);
+
+        // Mettre à jour le graphique sélectionné
+        if (document.getElementById('canvasChart').checked) {
+            updateCanvasChart(); // Mettre à jour un graphique personnalisé si nécessaire
+        } else {
+            new TradingView.widget({
+                "width": "100%",
+                "height": "100%",
+                "symbol": "BINANCE:" + selectedPair,
+                "interval": "60", // Intervalle en minutes (modifiable)
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_side_toolbar": true,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_chart_h1",
+                "studies": [
+                    "RSI@tv-basicstudies",
+                    "MACD@tv-basicstudies",
+                    "StochasticRSI@tv-basicstudies",
+                    "Volume@tv-basicstudies",
+                    "BB@tv-basicstudies"
+                ]
+            });
+        }
+
+        // Afficher un message de succès dans le panneau de statut
+        document.getElementById('statusPanel').textContent = `Data fetched successfully for ${selectedPair}`;
+
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        document.getElementById('statusPanel').textContent = `Failed to fetch market data: ${error.message}`;
+
+        // Mettre à jour les indicateurs avec des valeurs nulles pour afficher '--'
+        updateIndicators({});
+    }
+}
+
+
+function updateIndicators({
+    bollingerBands,
+    adx,
+    stoch,
+    vwap,
+    macd,
+    obv,
+    williams
+}) {
+    if (bollingerBands?.upper?.length > 0) {
+        document.getElementById('bollingerValue').textContent =
+            `${bollingerBands.upper.at(-1).toFixed(8)} / ${bollingerBands.lower.at(-1).toFixed(8)}`;
+    } else {
+        document.getElementById('bollingerValue').textContent = '--';
+    }
+
+    document.getElementById('adxValue').textContent =
+        adx?.length ? adx.at(-1).toFixed(8) : '--';
+
+    if (stoch?.k?.length && stoch?.d?.length) {
+        document.getElementById('stochValue').textContent =
+            `${stoch.k.at(-1).toFixed(8)}/${stoch.d.at(-1).toFixed(8)}`;
+    } else {
+        document.getElementById('stochValue').textContent = '--';
+    }
+
+    document.getElementById('vwapValue').textContent =
+        vwap?.length ? vwap.at(-1).toFixed(8) : '--';
+
+    if (macd?.line?.length && macd?.signal?.length) {
+        document.getElementById('macdValue').textContent =
+            `${macd.line.at(-1).toFixed(8)}/${macd.signal.at(-1).toFixed(8)}`;
+    } else {
+        document.getElementById('macdValue').textContent = '--';
+    }
+
+    document.getElementById('obvValue').textContent =
+        obv?.length ? obv.at(-1).toFixed(0) : '--';
+
+    document.getElementById('williamsValue').textContent =
+        williams?.length ? williams.at(-1).toFixed(8) : '--';
+}
+
+// Fetch recent kline data including OHLCV
+async function fetchRecentKlines(symbol) {
+    try {
+        const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=60`);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        const data = await response.json();
+        
+        if (!Array.isArray(data) || !data.length) {
+            throw new Error('Invalid data format received');
+        }
+        
+        // Validate each data point before mapping
+        const validData = data.every(item => 
+            Array.isArray(item) && 
+            item.length >= 6 && 
+            !item.some(val => val === null || val === undefined)
+        );
+        
+        if (!validData) {
+            throw new Error('Invalid data points received');
+        }
+        
+        return {
+            timestamps: data.map(item => parseInt(item[0])),
+            opens: data.map(item => parseFloat(item[1])),
+            highs: data.map(item => parseFloat(item[2])),
+            lows: data.map(item => parseFloat(item[3])),
+            closes: data.map(item => parseFloat(item[4])),
+            volumes: data.map(item => parseFloat(item[5]))
+        };
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        document.getElementById('statusPanel').textContent = `Failed to fetch market data: ${error.message}`;
+        return null;
+    }
+}
+
+async function updateCanvasChart() {
+    if (!priceChart) return;
+
+    const data = await fetchRecentKlines(selectedPair);
+    if (data && data.closes) {
+        const timestamps = data.timestamps.map(ts => 
+            new Date(ts).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            })
+        );
+        
+        // Update price data
+        priceChart.data.labels = timestamps;
+        priceChart.data.datasets[0].data = data.closes;
+        
+        // Update current price display
+        const currentPrice = data.closes[data.closes.length - 1];
+        document.getElementById('currentPrice').textContent = currentPrice.toFixed(8);
+        
+        // Update trading levels if active
+        const takeProfit = parseFloat(takeProfitInput.value) || 0;
+        const stopLoss = parseFloat(stopLossInput.value) || 0;
+        
+        updateChartLevels(currentPrice, entryPrice, takeProfit, stopLoss);
+        
+        priceChart.update();
+    }
+}
+
+function calculateRSI(prices, period = 14) {
+    if (!prices || prices.length < period + 1) {
+        return Array(prices?.length || 0).fill(null); // Return array of nulls if insufficient data
+    }
+    
+    let gains = 0;
+    let losses = 0;
+    let rsis = [];
+
+    // Calculate initial averages
+    for (let i = 1; i <= period; i++) {
+        const diff = prices[i] - prices[i - 1];
+        if (diff >= 0) {
+            gains += diff;
+        } else {
+            losses -= diff;
+        }
+    }
+
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+    
+    // Calculate RSI using smoothed averages
+    for (let i = period + 1; i < prices.length; i++) {
+        const diff = prices[i] - prices[i - 1];
+        const currentGain = diff >= 0 ? diff : 0;
+        const currentLoss = diff < 0 ? -diff : 0;
+        
+        avgGain = ((avgGain * (period - 1)) + currentGain) / period;
+        avgLoss = ((avgLoss * (period - 1)) + currentLoss) / period;
+        
+        if (avgLoss === 0) {
+            rsis.push(100);
+        } else {
+            const rs = avgGain / avgLoss;
+            rsis.push(100 - (100 / (1 + rs)));
+        }
+    }
+    
+    return rsis;
+}
+
+function calculateEMA(prices, period) {
+    if (!prices || prices.length < period) {
+        return [];
+    }
+
+    const multiplier = 2 / (period + 1);
+    let ema = [];
+    
+    // Calculate initial SMA
+    const sma = prices.slice(0, period).reduce((acc, price) => acc + price, 0) / period;
+    ema.push(sma);
+
+    // Calculate EMA
+    for (let i = period; i < prices.length; i++) {
+        const currentEma = (prices[i] - ema[ema.length - 1]) * multiplier + ema[ema.length - 1];
+        ema.push(currentEma);
+    }
+
+    return ema;
+}
+
+function calculateBollingerBands(prices, period = 20) {
+    if (!prices?.length || prices.length < period) {
+        return {
+            upper: Array(prices?.length || 0).fill(null),
+            lower: Array(prices?.length || 0).fill(null),
+            sma: Array(prices?.length || 0).fill(null)
+        };
+    }
+    let upper = [];
+    let lower = [];
+    let sma = [];
+
+    for (let i = 0; i < prices.length - period + 1; i++) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) {
+            sum += prices[i + j];
+        }
+        
+        let mean = sum / period;
+        let variance = 0;
+        for (let j = 0; j < period; j++) {
+            variance += Math.pow(prices[i + j] - mean, 2);
+        }
+        variance /= period;
+        
+        let stdDev = Math.sqrt(variance);
+        
+        sma.push(mean);
+        upper.push(mean + 2 * stdDev);
+        lower.push(mean - 2 * stdDev);
+    }
+    
+    return { upper, lower };
+}
+
+// Add new indicator calculation functions
+function calculateADX(data, period = 14) {
+    if (!data?.highs || !data?.lows || !data?.closes) {
+        console.error("ADX calculation requires highs, lows, and closes.");
+        return Array(data?.closes?.length || 0).fill(null);
+    }
+
+    const { highs, lows, closes } = data;
+    if (closes.length < period + 1) {
+        return Array(closes.length).fill(null);
+    }
+
+    const tr = [0];
+    const dmPlus = [0];
+    const dmMinus = [0];
+    
+    // Calculate TR and DM
+    for (let i = 1; i < closes.length; i++) {
+        const hl = highs[i] - lows[i];
+        const hc = Math.abs(highs[i] - closes[i-1]);
+        const lc = Math.abs(lows[i] - closes[i-1]);
+        tr.push(Math.max(hl, hc, lc));
+        
+        const upMove = highs[i] - highs[i-1];
+        const downMove = lows[i-1] - lows[i];
+        
+        dmPlus.push(upMove > downMove && upMove > 0 ? upMove : 0);
+        dmMinus.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    }
+    
+    const trPeriod = calculateWilderSmoothing(tr, period);
+    const dmPlusPeriod = calculateWilderSmoothing(dmPlus, period);
+    const dmMinusPeriod = calculateWilderSmoothing(dmMinus, period);
+    
+    const diPlus = dmPlusPeriod.map((dm, i) => 
+        trPeriod[i] === 0 ? 0 : (dm / trPeriod[i]) * 100
+    );
+    const diMinus = dmMinusPeriod.map((dm, i) => 
+        trPeriod[i] === 0 ? 0 : (dm / trPeriod[i]) * 100
+    );
+    
+    const dx = diPlus.map((dip, i) => {
+        const denominator = dip + diMinus[i];
+        return denominator === 0 ? 0 : (Math.abs(dip - diMinus[i]) / denominator) * 100;
+    });
+    
+    return calculateEMA(dx, period);
+}
+
+function calculateWilderSmoothing(data, period) {
+    const smoothed = [data[0]];
+    const multiplier = 1/period;
+    
+    for (let i = 1; i < data.length; i++) {
+        smoothed.push((data[i] * multiplier) + (smoothed[i-1] * (1 - multiplier)));
+    }
+    
+    return smoothed;
+}
+
+function calculateStochastic(data, period = 14, smoothK = 4, smoothD = 3) {
+    const { highs, lows, closes } = data;
+    if (!highs?.length || !lows?.length || !closes?.length || closes.length < period) {
+        console.error("Stochastic calculation requires at least 'period' number of valid price data points.");
+        return { 
+            k: Array(closes?.length || 0).fill(null), 
+            d: Array(closes?.length || 0).fill(null) 
+        };
+    }
+
+    const stochK = [];
+    
+    for (let i = period - 1; i < closes.length; i++) {
+        const highSlice = highs.slice(i - period + 1, i + 1);
+        const lowSlice = lows.slice(i - period + 1, i + 1);
+        const highestHigh = Math.max(...highSlice);
+        const lowestLow = Math.min(...lowSlice);
+        
+        if (highestHigh === lowestLow) {
+            stochK.push(100);
+        } else {
+            stochK.push(
+                ((closes[i] - lowestLow) / (highestHigh - lowestLow)) * 100
+            );
+        }
+    }
+    
+    const stochKSmooth = calculateSMA(stochK, smoothK);
+    const stochD = calculateSMA(stochKSmooth, smoothD);
+    
+    return {
+        k: stochKSmooth,
+        d: stochD
+    };
+}
+
+function calculateVWAP(data) {
+    const { highs, lows, closes, volumes } = data;
+    let cumulativeTPV = 0;
+    let cumulativeVolume = 0;
+    
+    return closes.map((close, i) => {
+        const typicalPrice = (highs[i] + lows[i] + close) / 3;
+        cumulativeTPV += typicalPrice * volumes[i];
+        cumulativeVolume += volumes[i];
+        return cumulativeTPV / cumulativeVolume;
+    });
+}
+
+function calculateMACD(prices, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+    if (!prices?.length || prices.length < Math.max(fastPeriod, slowPeriod) + signalPeriod) {
+        return { 
+            line: Array(prices?.length || 0).fill(null), 
+            signal: Array(prices?.length || 0).fill(null), 
+            histogram: Array(prices?.length || 0).fill(null) 
+        };
+    }
+
+    const fastEMA = calculateEMA(prices, fastPeriod);
+    const slowEMA = calculateEMA(prices, slowPeriod);
+    
+    // Align arrays to same length by trimming the longer one
+    while (fastEMA.length > slowEMA.length) fastEMA.shift();
+    while (slowEMA.length > fastEMA.length) slowEMA.shift();
+    
+    const macdLine = fastEMA.map((fast, i) => fast - slowEMA[i]);
+    const signalLine = calculateEMA(macdLine, signalPeriod);
+    
+    // Align macdLine with signalLine
+    while (macdLine.length > signalLine.length) macdLine.shift();
+    
+    return {
+        line: macdLine,
+        signal: signalLine,
+        histogram: macdLine.map((macd, i) => macd - signalLine[i])
+    };
+}
+
+function calculateOBV(data) {
+    const { closes, volumes } = data;
+    if (!closes?.length || !volumes?.length || closes.length <2) {
+        return Array(closes?.length || 0).fill(null);
+    }
+
+    let obv = [0];
+    
+    for (let i = 1; i < closes.length; i++) {
+        if (closes[i] > closes[i-1]) {
+            obv.push(obv[i-1] + volumes[i]);
+        } else if (closes[i] < closes[i-1]) {
+            obv.push(obv[i-1] - volumes[i]);
+        } else {
+            obv.push(obv[i-1]);
+        }
+    }
+    
+    return obv;
+}
+
+function calculateWilliamsR(data, period = 14) {
+    const { highs, lows, closes } = data;
+    if (!highs?.length || !lows?.length || !closes?.length || closes.length < period) {
+        return Array(closes?.length || 0).fill(null);
+    }
+
+    const williamsR = [];
+    
+    for (let i = period - 1; i < closes.length; i++) {
+        const highInPeriod = Math.max(...highs.slice(i - period + 1, i + 1));
+        const lowInPeriod = Math.min(...lows.slice(i - period + 1, i + 1));
+        
+        if (highInPeriod === lowInPeriod) {
+            williamsR.push(-50);
+        } else {
+            williamsR.push(
+                ((highInPeriod - closes[i]) / (highInPeriod - lowInPeriod)) * -100
+            );
+        }
+    }
+    
+    return williamsR;
+}
+
+function calculateSMA(data, period) {
+    if (!data?.length || data.length < period) {
+        return Array(data?.length || 0).fill(null);
+    }
+
+    const sma = [];
+    let sum = 0;
+    
+    // Calculate first SMA
+    for (let i = 0; i < period; i++) {
+        sum += data[i];
+    }
+    sma.push(sum / period);
+    
+    // Calculate remaining SMAs
+    for (let i = period; i < data.length; i++) {
+        sum = sum - data[i - period] + data[i];
+        sma.push(sum / period);
+    }
+    
+    return sma;
+}
+
+// Execute once on page load to setup initial state
+document.addEventListener('DOMContentLoaded', fetchPairs);
+document.getElementById('toggleSettings').addEventListener('click', function() {
+  this.classList.toggle('active');
+  document.getElementById('settingsPanel').classList.toggle('active');
+  
+  // This line handles the arrow rotation
+  this.querySelector('.arrow').style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+});
+
+document.getElementById('toggleIndicators').addEventListener('click', function() {
+  this.classList.toggle('active');
+  document.getElementById('indicatorsPanel').classList.toggle('active');
+  
+  // This line handles the arrow rotation
+  this.querySelector('.arrow').style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+});
+
+// Add a reset functionality to the Reset button
+resetBtn.addEventListener('click', () => {
+    isTrading = false;
+    entryPrice = 0;
+    positionSize = 0;
+    
+    // Fermer la connexion WebSocket si elle est ouverte
+    if (websocket) {
+        websocket.close();
+        websocket = null;
+    }
+    
+    // Réinitialiser les états des boutons et des entrées
+    startBtn.style.backgroundColor = '#2ebd85';
+    startBtn.style.color = '#FFFFFF';
+    stopBtn.style.backgroundColor = '#2B3139';
+    stopBtn.style.color = '#848E9C';
+    
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+
+    // Réinitialiser les valeurs des champs d'entrée
+    document.getElementById('apiKey').value = '';
+    document.getElementById('secretKey').value = '';
+    document.getElementById('lotSize').value = '10000';
+    document.getElementById('takeProfit').value = '1';
+    document.getElementById('stopLoss').value = '1';
+    document.getElementById('ttp').value = '0.02';
+    document.getElementById('tsl').value = '0.02';
+
+    // Réinitialiser les valeurs affichées dans .params-row en fonction des entrées dans .controls
+    document.getElementById('lotSizeValue').textContent = document.getElementById('lotSize').value;
+    document.getElementById('takeProfitValue').textContent = document.getElementById('takeProfit').value;
+    document.getElementById('stopLossValue').textContent = document.getElementById('stopLoss').value;
+    document.getElementById('ttpValue').textContent = document.getElementById('ttp').value;
+    document.getElementById('tslValue').textContent = document.getElementById('tsl').value;
+
+    // Réinitialiser les autres affichages
+    document.getElementById('currentPrice').textContent = '--';
+    document.getElementById('lastOrderValue').textContent = '--';
+    document.getElementById('buyPrice').textContent = '--';
+    document.getElementById('sellPrice').textContent = '--';
+    document.getElementById('pnlValue').textContent = '--';
+    document.getElementById('statusPanel').textContent = 'Waiting for market conditions...';
+
+    // Désélectionner tous les indicateurs sélectionnés
+    document.querySelectorAll('.param-card.active').forEach(card => card.classList.remove('active'));
+    selectedIndicators.clear();
+});
+</script>	
+</body>
+</html>
